@@ -1,71 +1,155 @@
-# jitena README
+# SonarQube Auto-Fix Extension
 
-This is the README for your extension "jitena". After writing up a brief description, we recommend including the following sections.
+This VS Code extension automatically fixes SonarQube bugs using GitHub Copilot Chat and creates pull requests with the fixes.
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+- **Automatic Bug Detection**: Fetches bugs from SonarQube API
+- **AI-Powered Fixes**: Uses GitHub Copilot Chat to automatically fix issues
+- **Git Integration**: Creates a new branch for fixes
+- **Pull Request Creation**: Automatically pushes fixes and helps create PRs
+- **Configurable**: Easy setup through VS Code settings
 
-For example if there is an image subfolder under your extension project workspace:
+## Prerequisites
 
-\!\[feature X\]\(images/feature-x.png\)
+1. **GitHub Copilot Chat**: Must be installed and active in VS Code
+2. **SonarQube Server**: Access to a SonarQube instance
+3. **Git Repository**: Project must be in a Git repository
+4. **SonarQube Token**: Authentication token for SonarQube API
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+## Installation
 
-## Requirements
+1. Install the extension in VS Code
+2. Configure SonarQube settings (see Configuration section)
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+## Configuration
 
-## Extension Settings
+### Quick Setup
+1. Open Command Palette (`Ctrl+Shift+P`)
+2. Run `Configure SonarQube Settings`
+3. Enter your SonarQube details:
+   - Server URL (e.g., `http://localhost:9000`)
+   - Authentication token
+   - Project key
+   - Branch name for fixes (default: `sonar-auto-fix`)
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+### Manual Configuration
+Add these settings to your workspace settings (`.vscode/settings.json`):
 
-For example:
+```json
+{
+  "sonarAutoFix.sonarUrl": "http://localhost:9000",
+  "sonarAutoFix.sonarToken": "your-sonar-token",
+  "sonarAutoFix.projectKey": "your-project-key",
+  "sonarAutoFix.gitBranch": "sonar-auto-fix"
+}
+```
 
-This extension contributes the following settings:
+## Usage
 
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+1. **Configure Settings**: First time setup using the configuration command
+2. **Check Copilot**: Run `Check GitHub Copilot Availability` to verify setup
+3. **Run Auto-Fix**: 
+   - Open Command Palette (`Ctrl+Shift+P`)
+   - Run `Auto-Fix SonarQube Bugs`
+   - The extension will:
+     - Fetch issues from SonarQube
+     - Create a new Git branch
+     - Open each issue with Copilot Chat guidance
+     - Wait for your confirmation after each fix
+     - Commit each fix individually
+     - Push the branch to remote
+     - Offer to create a pull request
 
-## Known Issues
+## Commands
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+- `Auto-Fix SonarQube Bugs`: Main command to start the auto-fix process
+- `Configure SonarQube Settings`: Interactive setup for SonarQube connection
+- `Check GitHub Copilot Availability`: Verify if Copilot Chat is properly installed
 
-## Release Notes
+## How It Works
 
-Users appreciate release notes as you update your extension.
+1. **Copilot Check**: Verifies GitHub Copilot Chat is available
+2. **Issue Fetching**: Connects to SonarQube API to get all unresolved bugs, vulnerabilities, and code smells
+3. **File Resolution**: Maps SonarQube components to actual files in your workspace
+4. **AI Fixing**: For each issue:
+   - Opens the problematic file
+   - Navigates to the specific line
+   - Opens GitHub Copilot Chat with a detailed fix prompt
+   - Waits for user to review and apply the fix
+5. **Git Operations**: 
+   - Creates commits for each fix
+   - Pushes changes to a new branch
+   - Opens GitHub PR creation page
 
-### 1.0.0
+## Interactive Fix Process
 
-Initial release of ...
+The extension uses an interactive approach:
 
-### 1.0.1
+1. **Copilot Chat Integration**: Opens Copilot Chat with detailed context about each issue
+2. **User Confirmation**: Asks you to confirm when each fix is applied
+3. **Fallback Mode**: If Copilot Chat is not available, provides manual fix guidance
+4. **Progress Tracking**: Shows progress as issues are resolved
 
-Fixed issue #.
+## Supported Issue Types
 
-### 1.1.0
+- **Bugs**: Logic errors and potential runtime issues
+- **Vulnerabilities**: Security-related issues
+- **Code Smells**: Maintainability issues
+- **Severities**: BLOCKER, CRITICAL, MAJOR
 
-Added features X, Y, and Z.
+## Settings
 
----
+| Setting | Description | Default |
+|---------|-------------|---------|
+| `sonarAutoFix.sonarUrl` | SonarQube server URL | `http://localhost:9000` |
+| `sonarAutoFix.sonarToken` | SonarQube authentication token | `""` |
+| `sonarAutoFix.projectKey` | SonarQube project key | `""` |
+| `sonarAutoFix.gitBranch` | Git branch name for fixes | `sonar-auto-fix` |
 
-## Following extension guidelines
+## Troubleshooting
 
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
+### Common Issues
 
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
+1. **"No workspace folder found"**: Ensure you have a folder open in VS Code
+2. **"SonarQube token and project key must be configured"**: Run the configuration command first
+3. **"command 'github.copilot-chat...' not found"**: Install GitHub Copilot Chat extension
+4. **"File not found"**: Ensure your project structure matches SonarQube analysis
 
-## Working with Markdown
+### Checking Copilot Chat
 
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
+Use the `Check GitHub Copilot Availability` command to:
+- Verify Copilot Chat is installed
+- See available Copilot commands
+- Get help installing required extensions
 
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
+### Required Extensions
 
-## For more information
+- **GitHub Copilot**: Base Copilot functionality
+- **GitHub Copilot Chat**: Interactive chat interface (required for auto-fixing)
 
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
+### Logs
 
-**Enjoy!**
+Check the "SonarQube Auto-Fix" output channel for detailed logs:
+1. Open Output panel (`Ctrl+Shift+U`)
+2. Select "SonarQube Auto-Fix" from the dropdown
+
+## Limitations
+
+- Requires GitHub Copilot Chat subscription
+- Interactive process requires user confirmation for each fix
+- Works best with well-structured code
+- Some complex issues may require manual intervention
+- Limited to GitHub repositories for PR creation
+
+## Contributing
+
+1. Clone the repository
+2. Run `npm install`
+3. Make your changes
+4. Run `npm run compile` to test
+5. Submit a pull request
+
+## License
+
+MIT License - see LICENSE file for details

@@ -1,0 +1,6 @@
+{
+  "sonarAutoFix.sonarUrl": "http://localhost:9000",
+  "sonarAutoFix.sonarToken": "sqp_41345b81ffd02fd1b33c21abffeccc835881ffb1",
+  "sonarAutoFix.projectKey": "spring-boot-sonar",
+  "sonarAutoFix.gitBranch": "sonar-auto-fix"
+}
