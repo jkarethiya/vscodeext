@@ -44,9 +44,9 @@ class SonarAutoFix {
     }
 
     private async getSonarConfig() {
-        const sonarUrl = this.config.get<string>('sonarUrl') || 'http://localhost:9000';
-        const sonarToken = this.config.get<string>('sonarToken') || 'sqp_d9044814c85cccd3f8c0652cd7d0b3030c9f3f88';
-        const projectKey = this.config.get<string>('projectKey') || 'spring-boot-sonar';
+        const sonarUrl = this.config.get<string>('sonarUrl');
+        const sonarToken = this.config.get<string>('sonarToken');
+        const projectKey = this.config.get<string>('projectKey');
 
         if (!sonarToken || !projectKey) {
             throw new Error('SonarQube token and project key must be configured');
@@ -908,6 +908,108 @@ class SonarChatParticipant {
         stream.markdown(`💡 **Tip**: Type \`@sonar-agent help\` to see all available commands!`);
     }
 
+    async handleEditRequest(
+        request: vscode.ChatRequest,
+        context: vscode.ChatContext,
+        stream: vscode.ChatResponseStream,
+        token: vscode.CancellationToken
+    ): Promise<void> {
+        try {
+            this.log(`Received edit request: ${request.prompt}`);
+            
+            // For edit mode, we focus on code fixes and modifications
+            const prompt = request.prompt.toLowerCase();
+            
+            if (prompt.includes('fix') || prompt.includes('refactor') || prompt.includes('improve')) {
+                // Handle code editing requests
+                await this.handleCodeEditRequest(request, stream, token);
+            } else if (prompt.includes('sonar') || prompt.includes('issue')) {
+                // Handle SonarQube-specific edit requests
+                await this.handleSonarEditRequest(request, stream, token);
+            } else {
+                // General edit assistance
+                await this.handleGeneralEditRequest(request, stream, token);
+            }
+        } catch (error) {
+            this.log(`Error in edit request: ${error}`);
+            stream.markdown(`❌ **Error**: ${error}`);
+        }
+    }
+
+    private async handleCodeEditRequest(
+        request: vscode.ChatRequest,
+        stream: vscode.ChatResponseStream,
+        token: vscode.CancellationToken
+    ): Promise<void> {
+        stream.markdown(`## 🔧 Code Edit Mode\n`);
+        stream.markdown(`I can help you fix code issues. Here's what I can do in edit mode:\n\n`);
+        stream.markdown(`- **Fix SonarQube issues**: Identify and fix code quality issues\n`);
+        stream.markdown(`- **Refactor code**: Improve code structure and readability\n`);
+        stream.markdown(`- **Apply best practices**: Ensure code follows standards\n\n`);
+        stream.markdown(`💡 **Tip**: Select the code you want to fix and describe the issue!`);
+    }
+
+    private async handleSonarEditRequest(
+        request: vscode.ChatRequest,
+        stream: vscode.ChatResponseStream,
+        token: vscode.CancellationToken
+    ): Promise<void> {
+        stream.progress('Analyzing SonarQube issues for editing...');
+        
+        try {
+            const issues = await this.sonarAutoFix.fetchSonarIssues();
+            
+            if (issues.length === 0) {
+                stream.markdown('✅ **No SonarQube issues found!** Your code is clean.');
+                return;
+            }
+
+            stream.markdown(`## 🔍 Found ${issues.length} SonarQube Issues to Fix\n`);
+            stream.markdown(`In edit mode, I can help you fix these issues directly in your code:\n\n`);
+            
+            // Show top 3 issues for editing
+            const topIssues = issues.slice(0, 3);
+            for (const issue of topIssues) {
+                const fileName = issue.component.split(':').pop() || 'Unknown';
+                stream.markdown(`### ${fileName}:${issue.line}\n`);
+                stream.markdown(`**Issue**: ${issue.message}\n`);
+                stream.markdown(`**Rule**: \`${issue.rule}\`\n`);
+                stream.markdown(`**Severity**: ${issue.severity}\n\n`);
+            }
+            
+            stream.markdown(`💡 **To fix an issue**: Select the problematic code and ask me to fix it!`);
+            
+        } catch (error) {
+            stream.markdown(`❌ **Error analyzing issues**: ${error}`);
+        }
+    }
+
+    private async handleGeneralEditRequest(
+        request: vscode.ChatRequest,
+        stream: vscode.ChatResponseStream,
+        token: vscode.CancellationToken
+    ): Promise<void> {
+        stream.markdown(`## ✏️ Edit Mode Assistant\n`);
+        stream.markdown(`I'm in edit mode and ready to help you modify your code! Here's what I can do:\n\n`);
+        
+        stream.markdown(`### 🔍 **Code Analysis**\n`);
+        stream.markdown(`- Find and fix SonarQube issues\n`);
+        stream.markdown(`- Identify code smells and bugs\n`);
+        stream.markdown(`- Suggest improvements\n\n`);
+        
+        stream.markdown(`### 🔧 **Code Fixes**\n`);
+        stream.markdown(`- Apply SonarQube rule fixes\n`);
+        stream.markdown(`- Refactor problematic code\n`);
+        stream.markdown(`- Improve code quality\n\n`);
+        
+        stream.markdown(`### 📝 **How to Use**\n`);
+        stream.markdown(`1. Select the code you want to fix\n`);
+        stream.markdown(`2. Describe what you want to improve\n`);
+        stream.markdown(`3. I'll provide specific fix suggestions\n\n`);
+        
+        stream.markdown(`💡 **Example**: "Fix this SonarQube issue" or "Improve this code's readability"`);
+    }
+
     provideFollowups(
         result: vscode.ChatResult,
         context: vscode.ChatContext,
@@ -1057,17 +1159,48 @@ export function activate(context: vscode.ExtensionContext) {
                     }
                 };
                 console.log('Followup provider set successfully - Agent mode enabled');
-                vscode.window.showInformationMessage('✅ SonarQube Agent registered in AGENT MODE!');
             } else {
-                console.warn('followupProvider not available - falling back to ask mode');
-                vscode.window.showWarningMessage('⚠️ SonarQube Agent registered in ASK MODE only (VS Code/Copilot Chat version limitation)');
+                console.warn('followupProvider not available - checking for alternative APIs');
             }
         } catch (followupError) {
             console.error('Error setting followup provider:', followupError);
-            vscode.window.showWarningMessage('⚠️ SonarQube Agent registered in ASK MODE only (followup provider failed)');
+        }
+
+        // Try to enable edit mode support
+        try {
+            // Check if the participant supports edit mode
+            if ('editProvider' in chatParticipant) {
+                chatParticipant.editProvider = {
+                    provideEdits(request: vscode.ChatRequest, context: vscode.ChatContext, response: vscode.ChatResponseStream, token: vscode.CancellationToken) {
+                        console.log('Edit mode requested');
+                        return sonarChatParticipant.handleChatRequest(request, context, response, token);
+                    }
+                };
+                console.log('Edit provider set successfully - Edit mode enabled');
+            } else {
+                console.warn('editProvider not available in this VS Code version');
+            }
+        } catch (editError) {
+            console.error('Error setting edit provider:', editError);
+        }
+
+        // Final mode check and user notification
+        const supportedModes = [];
+        if ('followupProvider' in chatParticipant) {
+            supportedModes.push('agent');
+        }
+        if ('editProvider' in chatParticipant) {
+            supportedModes.push('edit');
+        }
+        supportedModes.push('ask'); // Always supported
+
+        if (supportedModes.length > 1) {
+            vscode.window.showInformationMessage(`✅ SonarQube Agent registered with modes: ${supportedModes.join(', ')}`);
+        } else {
+            vscode.window.showWarningMessage('⚠️ SonarQube Agent registered in ASK MODE only (VS Code/Copilot Chat version limitation)');
         }
         
-        console.log('Chat participant registered successfully:', chatParticipant);
+        console.log('Chat participant registered successfully with modes:', supportedModes);
         
         // Register the auto-fix command
         const autoFixCommand = vscode.commands.registerCommand('jitena.autoFixSonarBugs', async () => {
@@ -1115,10 +1248,20 @@ export function activate(context: vscode.ExtensionContext) {
                     const copilotExt = vscode.extensions.getExtension('GitHub.copilot');
                     const copilotChatExt = vscode.extensions.getExtension('GitHub.copilot-chat');
                     
+                    // Check what modes are supported
+                    const supportedModes = [];
+                    if ('followupProvider' in chatParticipant) {
+                        supportedModes.push('agent');
+                    }
+                    if ('editProvider' in chatParticipant) {
+                        supportedModes.push('edit');
+                    }
+                    supportedModes.push('ask'); // Always supported
+                    
                     const message = `✅ Chat API is available! 
 VS Code version: ${vscode.version}
 Chat participant registered: ${chatParticipant ? 'Yes' : 'No'}
-Agent mode: ${chatParticipant && 'followupProvider' in chatParticipant ? 'Enabled' : 'Not available'}
+Supported modes: ${supportedModes.join(', ')}
 GitHub Copilot: ${copilotExt ? `v${copilotExt.packageJSON.version}` : 'Not installed'}
 Copilot Chat: ${copilotChatExt ? `v${copilotChatExt.packageJSON.version}` : 'Not installed'}`;
                     
