@@ -45,7 +45,7 @@ class SonarAutoFix {
 
     private async getSonarConfig() {
         const sonarUrl = this.config.get<string>('sonarUrl') || 'http://localhost:9000';
-        const sonarToken = this.config.get<string>('sonarToken') || 'sqp_41345b81ffd02fd1b33c21abffeccc835881ffb1';
+        const sonarToken = this.config.get<string>('sonarToken') || 'sqp_d9044814c85cccd3f8c0652cd7d0b3030c9f3f88';
         const projectKey = this.config.get<string>('projectKey') || 'spring-boot-sonar';
 
         if (!sonarToken || !projectKey) {
@@ -913,82 +913,89 @@ class SonarChatParticipant {
         context: vscode.ChatContext,
         token: vscode.CancellationToken
     ): vscode.ChatFollowup[] | Promise<vscode.ChatFollowup[]> {
+        console.log('🔄 provideFollowups called - Agent mode is working!');
+        
         const followups: vscode.ChatFollowup[] = [];
 
-        // Provide contextual follow-ups based on the last interaction
-        if (context.history.length > 0) {
-            const lastMessage = context.history[context.history.length - 1];
-            
-            if (lastMessage.participant === 'sonar-agent' && 'prompt' in lastMessage) {
-                const lastPrompt = lastMessage.prompt.toLowerCase();
+        try {
+            // Provide contextual follow-ups based on the last interaction
+            if (context.history.length > 0) {
+                const lastMessage = context.history[context.history.length - 1];
                 
-                if (lastPrompt.includes('help')) {
-                    followups.push(
-                        {
-                            prompt: '@sonar-agent /config',
-                            label: '⚙️ Configure SonarQube',
-                            command: 'config'
-                        },
-                        {
-                            prompt: '@sonar-agent /fetch',
-                            label: '🔍 Fetch Issues',
-                            command: 'fetch'
-                        }
-                    );
-                } else if (lastPrompt.includes('config')) {
-                    followups.push(
-                        {
-                            prompt: '@sonar-agent /fetch',
-                            label: '🔍 Test Connection',
-                            command: 'fetch'
-                        }
-                    );
-                } else if (lastPrompt.includes('fetch') || lastPrompt.includes('issues')) {
-                    followups.push(
-                        {
-                            prompt: '@sonar-agent /fix-all',
-                            label: '🔧 Fix All Issues',
-                            command: 'fix-all'
-                        },
-                        {
-                            prompt: '@sonar-agent /analyze',
-                            label: '📊 Analyze Issues',
-                            command: 'analyze'
-                        }
-                    );
-                } else if (lastPrompt.includes('fix')) {
-                    followups.push(
-                        {
-                            prompt: '@sonar-agent /fetch',
-                            label: '🔄 Refresh Issues',
-                            command: 'fetch'
-                        }
-                    );
+                if (lastMessage.participant === 'sonar-agent' && 'prompt' in lastMessage) {
+                    const lastPrompt = lastMessage.prompt.toLowerCase();
+                    
+                    if (lastPrompt.includes('help')) {
+                        followups.push(
+                            {
+                                prompt: '@sonar-agent /config',
+                                label: '⚙️ Configure SonarQube',
+                                command: 'config'
+                            },
+                            {
+                                prompt: '@sonar-agent /fetch',
+                                label: '🔍 Fetch Issues',
+                                command: 'fetch'
+                            }
+                        );
+                    } else if (lastPrompt.includes('config')) {
+                        followups.push(
+                            {
+                                prompt: '@sonar-agent /fetch',
+                                label: '🔍 Test Connection',
+                                command: 'fetch'
+                            }
+                        );
+                    } else if (lastPrompt.includes('fetch') || lastPrompt.includes('issues')) {
+                        followups.push(
+                            {
+                                prompt: '@sonar-agent /fix-all',
+                                label: '🔧 Fix All Issues',
+                                command: 'fix-all'
+                            },
+                            {
+                                prompt: '@sonar-agent /analyze',
+                                label: '📊 Analyze Issues',
+                                command: 'analyze'
+                            }
+                        );
+                    } else if (lastPrompt.includes('fix')) {
+                        followups.push(
+                            {
+                                prompt: '@sonar-agent /fetch',
+                                label: '🔄 Refresh Issues',
+                                command: 'fetch'
+                            }
+                        );
+                    }
                 }
             }
+
+            // Always provide common follow-ups
+            if (followups.length === 0) {
+                followups.push(
+                    {
+                        prompt: '@sonar-agent /help',
+                        label: '❓ Help',
+                        command: 'help'
+                    },
+                    {
+                        prompt: '@sonar-agent /config',
+                        label: '⚙️ Configure',
+                        command: 'config'
+                    },
+                    {
+                        prompt: '@sonar-agent /fetch',
+                        label: '🔍 Fetch Issues',
+                        command: 'fetch'
+                    }
+                );
+            }
+        } catch (error) {
+            console.error('Error in provideFollowups:', error);
         }
 
-        // Always provide common follow-ups
-        if (followups.length === 0) {
-            followups.push(
-                {
-                    prompt: '@sonar-agent /help',
-                    label: '❓ Help',
-                    command: 'help'
-                },
-                {
-                    prompt: '@sonar-agent /config',
-                    label: '⚙️ Configure',
-                    command: 'config'
-                },
-                {
-                    prompt: '@sonar-agent /fetch',
-                    label: '🔍 Fetch Issues',
-                    command: 'fetch'
-                }
-            );
-        }
-
+        console.log(`📋 Returning ${followups.length} followups:`, followups);
         return followups;
     }
 }
@@ -1000,17 +1007,65 @@ export function activate(context: vscode.ExtensionContext) {
     console.log('SonarQube Auto-Fix extension is now active!');
     
     try {
+        // Check VS Code version and chat API availability
+        console.log('VS Code version:', vscode.version);
+        console.log('Chat API available:', !!vscode.chat);
+        
+        if (!vscode.chat) {
+            vscode.window.showErrorMessage('Chat API is not available. Please update VS Code to version 1.95.0 or higher.');
+            return;
+        }
+
+        // Show startup message
+        vscode.window.showInformationMessage(
+            '🚀 SonarQube Auto-Fix extension activated! Try typing "@sonar-agent help" in Copilot Chat to get started.',
+            'Open Copilot Chat'
+        ).then(selection => {
+            if (selection === 'Open Copilot Chat') {
+                vscode.commands.executeCommand('workbench.panel.chat.view.copilot.focus');
+            }
+        });
+
         // Register the chat participant with agent mode support
         const sonarChatParticipant = new SonarChatParticipant();
-        const chatParticipant = vscode.chat.createChatParticipant('sonar-agent', sonarChatParticipant.handleChatRequest.bind(sonarChatParticipant));
-        chatParticipant.iconPath = vscode.Uri.joinPath(context.extensionUri, 'icon.svg');
+        
+        // Create chat participant with proper error handling
+        let chatParticipant: vscode.ChatParticipant;
+        try {
+            chatParticipant = vscode.chat.createChatParticipant('sonar-agent', sonarChatParticipant.handleChatRequest.bind(sonarChatParticipant));
+            console.log('Chat participant created successfully');
+        } catch (createError) {
+            console.error('Failed to create chat participant:', createError);
+            vscode.window.showErrorMessage(`Failed to create chat participant: ${createError}`);
+            return;
+        }
+
+        // Set icon if available
+        try {
+            chatParticipant.iconPath = vscode.Uri.joinPath(context.extensionUri, 'icon.svg');
+        } catch (iconError) {
+            console.warn('Could not set icon:', iconError);
+        }
         
         // Enable agent mode by providing followup suggestions
-        chatParticipant.followupProvider = {
-            provideFollowups(result: vscode.ChatResult, context: vscode.ChatContext, token: vscode.CancellationToken) {
-                return sonarChatParticipant.provideFollowups(result, context, token);
+        try {
+            if ('followupProvider' in chatParticipant) {
+                chatParticipant.followupProvider = {
+                    provideFollowups(result: vscode.ChatResult, context: vscode.ChatContext, token: vscode.CancellationToken) {
+                        console.log('Providing followups...');
+                        return sonarChatParticipant.provideFollowups(result, context, token);
+                    }
+                };
+                console.log('Followup provider set successfully - Agent mode enabled');
+                vscode.window.showInformationMessage('✅ SonarQube Agent registered in AGENT MODE!');
+            } else {
+                console.warn('followupProvider not available - falling back to ask mode');
+                vscode.window.showWarningMessage('⚠️ SonarQube Agent registered in ASK MODE only (VS Code/Copilot Chat version limitation)');
             }
-        };
+        } catch (followupError) {
+            console.error('Error setting followup provider:', followupError);
+            vscode.window.showWarningMessage('⚠️ SonarQube Agent registered in ASK MODE only (followup provider failed)');
+        }
         
         console.log('Chat participant registered successfully:', chatParticipant);
         
@@ -1056,7 +1111,19 @@ export function activate(context: vscode.ExtensionContext) {
             try {
                 // Check if chat API is available
                 if (vscode.chat) {
-                    vscode.window.showInformationMessage('✅ Chat API is available! Chat participant should be registered.');
+                    // Check for GitHub Copilot extension
+                    const copilotExt = vscode.extensions.getExtension('GitHub.copilot');
+                    const copilotChatExt = vscode.extensions.getExtension('GitHub.copilot-chat');
+                    
+                    const message = `✅ Chat API is available! 
+VS Code version: ${vscode.version}
+Chat participant registered: ${chatParticipant ? 'Yes' : 'No'}
+Agent mode: ${chatParticipant && 'followupProvider' in chatParticipant ? 'Enabled' : 'Not available'}
+GitHub Copilot: ${copilotExt ? `v${copilotExt.packageJSON.version}` : 'Not installed'}
+Copilot Chat: ${copilotChatExt ? `v${copilotChatExt.packageJSON.version}` : 'Not installed'}`;
+                    
+                    vscode.window.showInformationMessage(message);
+                    console.log('Chat participant test results:', message);
                 } else {
                     vscode.window.showErrorMessage('❌ Chat API is not available. This might be a VS Code version issue.');
                 }
@@ -1066,9 +1133,6 @@ export function activate(context: vscode.ExtensionContext) {
         });
 
         context.subscriptions.push(chatParticipant, autoFixCommand, configureCommand, checkCopilotCommand, testChatCommand);
-        
-        // Show a notification that the extension is ready
-        vscode.window.showInformationMessage('SonarQube Auto-Fix extension loaded! Chat participant @sonar-agent is ready.');
         
     } catch (error) {
         console.error('Error activating extension:', error);
