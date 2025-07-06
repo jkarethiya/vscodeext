@@ -1,0 +1,28 @@
+{
+  "name": "copilot-chat-mcp-server",
+  "version": "1.0.0",
+  "description": "MCP server for GitHub Copilot Chat integration with enhanced developer tools",
+  "type": "module",
+  "main": "build/index.js",
+  "bin": {
+    "copilot-mcp": "./build/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node build/index.js",
+    "dev": "tsc && node build/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["mcp", "model-context-protocol", "copilot", "github", "developer-tools"],
+  "author": "",
+  "license": "ISC",
+  "files": ["build"],
+  "devDependencies": {
+    "@types/node": "^24.0.10",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.15.0",
+    "zod": "^3.25.74"
+  }
+}

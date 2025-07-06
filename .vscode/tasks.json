@@ -1,0 +1,35 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build",
+      "type": "shell",
+      "command": "npx tsc",
+      "group": "build",
+      "problemMatcher": ["$tsc"]
+    },
+    {
+      "label": "run-server",
+      "type": "shell",
+      "command": "node build/index.js",
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "build-and-run",
+      "type": "shell",
+      "command": "npx tsc && node build/index.js",
+      "group": "test",
+      "problemMatcher": ["$tsc"],
+      "dependsOn": "build"
+    },
+    {
+      "label": "test-server",
+      "type": "shell",
+      "command": "node test-server.js",
+      "group": "test",
+      "problemMatcher": [],
+      "dependsOn": "build"
+    }
+  ]
+}
