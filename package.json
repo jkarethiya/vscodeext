@@ -2,14 +2,19 @@
   "name": "jitena",
   "displayName": "SonarQube Auto-Fix",
   "description": "Automatically fix SonarQube bugs using GitHub Copilot Chat and create pull requests",
-  "version": "0.0.1",
+  "version": "0.1.0",
+  "publisher": "your-publisher",
   "engines": {
     "vscode": "^1.101.0"
   },
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onStartupFinished",
+    "onLanguage:*",
+    "onChat:sonar-agent"
+  ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
@@ -24,6 +29,41 @@
       {
         "command": "jitena.checkCopilot",
         "title": "Check GitHub Copilot Availability"
+      },
+      {
+        "command": "jitena.testChatParticipant",
+        "title": "Test Chat Participant Registration"
+      }
+    ],
+    "chatParticipants": [
+      {
+        "id": "sonar-agent",
+        "name": "sonar-agent",
+        "fullName": "SonarQube Code Quality Agent",
+        "description": "AI agent for SonarQube issue analysis and auto-fixing with GitHub Copilot",
+        "isSticky": true,
+        "commands": [
+          {
+            "name": "help",
+            "description": "Show all available commands and help information"
+          },
+          {
+            "name": "config",
+            "description": "Configure SonarQube connection settings"
+          },
+          {
+            "name": "fetch",
+            "description": "Fetch and display SonarQube issues"
+          },
+          {
+            "name": "fix-all",
+            "description": "Start auto-fix process for all issues"
+          },
+          {
+            "name": "analyze",
+            "description": "Analyze and provide statistics about issues"
+          }
+        ]
       }
     ],
     "configuration": {

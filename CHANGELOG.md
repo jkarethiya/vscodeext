@@ -2,6 +2,35 @@
 
 All notable changes to the "SonarQube Auto-Fix" extension will be documented in this file.
 
+## [0.1.0] - 2025-07-06
+
+### Added
+- **🤖 GitHub Copilot Chat Participant**: `@sonar-agent` for natural language interaction
+- **🔍 Intelligent Issue Fetching**: Fetch and analyze SonarQube issues through chat
+- **🔧 Interactive Fix Process**: Fix issues through conversational interface
+- **📊 Issue Analytics**: View issues grouped by severity with emoji indicators
+- **⚙️ Chat-based Configuration**: Configure SonarQube settings through chat
+- **💡 Contextual Help**: Comprehensive help system within chat
+- **🎯 Specific Issue Fixing**: Fix individual issues by key through chat
+- **📱 File Navigation**: Automatically open and navigate to problematic code
+- **🔄 Process Tracking**: Real-time progress updates during fix process
+
+### Chat Commands
+- `@sonar-agent fetch issues` - List all SonarQube issues
+- `@sonar-agent fix all issues` - Start auto-fix process for all issues
+- `@sonar-agent fix issue <key>` - Fix a specific issue
+- `@sonar-agent config` - Configure SonarQube settings
+- `@sonar-agent help` - Show all available commands
+- `@sonar-agent analyze issues` - Get detailed issue analysis
+- `@sonar-agent statistics` - Show issue statistics
+
+### Enhanced Features
+- Interactive chat-based workflow
+- Real-time issue analysis and suggestions
+- Contextual code navigation
+- Severity-based issue grouping
+- Enhanced error handling and user feedback
+
 ## [0.0.1] - 2025-07-06
 
 ### Added

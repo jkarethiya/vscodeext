@@ -1,14 +1,83 @@
 # SonarQube Auto-Fix Extension
 
-This VS Code extension automatically fixes SonarQube bugs using GitHub Copilot Chat and creates pull requests with the fixes.
+This VS Code extension provides a GitHub Copilot Chat participant (`@sonar-agent`) that helps you manage and fix SonarQube issues directly through natural language conversations.
 
 ## Features
 
-- **Automatic Bug Detection**: Fetches bugs from SonarQube API
-- **AI-Powered Fixes**: Uses GitHub Copilot Chat to automatically fix issues
-- **Git Integration**: Creates a new branch for fixes
-- **Pull Request Creation**: Automatically pushes fixes and helps create PRs
-- **Configurable**: Easy setup through VS Code settings
+- **🤖 Chat Participant**: Use `@sonar-agent` in GitHub Copilot Chat
+- **🔍 Issue Detection**: Fetch and analyze SonarQube issues
+- **🔧 AI-Powered Fixes**: Get intelligent fix suggestions
+- **📊 Issue Analytics**: View issues grouped by severity
+- **🌊 Git Integration**: Automatic branch creation and PR management
+- **⚙️ Easy Configuration**: Interactive setup through chat
+
+## Quick Start
+
+1. **Install the extension**
+2. **Open GitHub Copilot Chat** (Ctrl+Shift+I)
+3. **Type `@sonar-agent help`** to see all available commands
+4. **Configure SonarQube**: `@sonar-agent config`
+5. **Fetch issues**: `@sonar-agent fetch issues`
+6. **Fix issues**: `@sonar-agent fix all issues`
+
+## Chat Commands
+
+### 🔍 **Issue Management**
+- `@sonar-agent fetch issues` - List all SonarQube issues
+- `@sonar-agent list issues` - Same as above
+- `@sonar-agent show issues` - Display issues with details
+
+### 🔧 **Fix Issues**
+- `@sonar-agent fix all issues` - Start auto-fix process for all issues
+- `@sonar-agent fix issue ABC-123` - Fix a specific issue by key
+- `@sonar-agent fix this issue` - Fix the currently selected issue
+
+### ⚙️ **Configuration**
+- `@sonar-agent config` - Configure SonarQube settings
+- `@sonar-agent setup` - Interactive setup wizard
+- `@sonar-agent check config` - Verify current configuration
+
+### 📊 **Analysis**
+- `@sonar-agent analyze issues` - Get detailed analysis
+- `@sonar-agent statistics` - Show issue statistics
+- `@sonar-agent help` - Show all available commands
+
+## Example Conversations
+
+### Getting Started
+```
+You: @sonar-agent help
+SonarQube Agent: I'm your AI assistant for managing SonarQube issues! Here's what I can do:
+- Fetch issues from your SonarQube server
+- Fix issues automatically using AI
+- Configure SonarQube settings
+- Analyze code quality metrics
+```
+
+### Fetching Issues
+```
+You: @sonar-agent fetch issues
+SonarQube Agent: 🔍 Found 12 SonarQube Issues
+
+🚨 BLOCKER (2)
+- UserController.java:45 - Potential null pointer dereference
+- DataService.java:123 - SQL injection vulnerability
+
+❗ CRITICAL (3)
+- AuthService.java:67 - Hardcoded credentials
+...
+```
+
+### Fixing Issues
+```
+You: @sonar-agent fix all issues
+SonarQube Agent: 🔧 Auto-Fix Process Started
+Found 12 issues to fix. This process will:
+1. Create a new Git branch: sonar-auto-fix
+2. Fix each issue one by one
+3. Commit each fix individually
+4. Push the branch and create a PR
+```
 
 ## Prerequisites
 
